@@ -5,8 +5,8 @@ import { Zap, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { listStudents } from "@/shared/students.read.service";
-import type { Student } from "@/shared/students.read.service";
 import { listStudentsCached } from "@/shared/students.cache.service";
+import {Student} from "@/shared/students.interface";
 
 export interface TestResult {
   type: "cache" | "sql";
@@ -76,7 +76,7 @@ export function PerformanceTest({ onLog, onResult }: PerformanceTestProps) {
       <div className="flex-1 p-6 rounded-xl">
         <Button className="w-full h-16 text-lg gap-3" onClick={runCacheTest} disabled={isTestingCache}>
           <Zap className="h-5 w-5" />
-          {isTestingCache ? "Testando..." : "Teste com Cache Aside"}
+          {isTestingCache ? "Testando..." : "Teste com Cache Redis"}
         </Button>
         {lastCache && (
           <div className="flex items-center justify-center gap-2 mt-3">

@@ -77,7 +77,7 @@ export function MetricsPanel({ results }: MetricsPanelProps) {
                 <thead>
                   <tr className="border-b border-border">
                     <th className="text-left py-2 px-3 font-medium">Metrica</th>
-                    <th className="text-center py-2 px-3 font-medium text-primary">Cache Aside</th>
+                    <th className="text-center py-2 px-3 font-medium text-primary">Cache Redis</th>
                     <th className="text-center py-2 px-3 font-medium">SQL Direto</th>
                   </tr>
                 </thead>
