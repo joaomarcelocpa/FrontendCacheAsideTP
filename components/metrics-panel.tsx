@@ -50,7 +50,7 @@ export function MetricsPanel({ results }: MetricsPanelProps) {
       <CardHeader className="pb-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-primary" />
-          Metricas de Performance
+          Métricas de Performance
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -60,11 +60,11 @@ export function MetricsPanel({ results }: MetricsPanelProps) {
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 rounded-lg bg-primary/10 text-center">
                 <p className="text-2xl font-bold text-primary">{cacheResults.at(-1)?.duration_ms ?? 0}ms</p>
-                <p className="text-xs text-muted-foreground">Ultimo Cache</p>
+                <p className="text-xs text-muted-foreground">Último Cache</p>
               </div>
               <div className="p-4 rounded-lg bg-secondary/30 text-center">
                 <p className="text-2xl font-bold">{sqlResults.at(-1)?.duration_ms ?? 0}ms</p>
-                <p className="text-xs text-muted-foreground">Ultimo SQL</p>
+                <p className="text-xs text-muted-foreground">Último SQL</p>
               </div>
               <div className="p-4 rounded-lg bg-green-500/10 text-center">
                 <p className="text-2xl font-bold text-green-600">{improvement > 0 ? `${improvement}%` : "-"}</p>
@@ -76,29 +76,29 @@ export function MetricsPanel({ results }: MetricsPanelProps) {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-border">
-                    <th className="text-left py-2 px-3 font-medium">Metrica</th>
+                    <th className="text-left py-2 px-3 font-medium">Métrica</th>
                     <th className="text-center py-2 px-3 font-medium text-primary">Cache Redis</th>
-                    <th className="text-center py-2 px-3 font-medium">SQL Direto</th>
+                    <th className="text-center py-2 px-3 font-medium">Consulta SQL</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr className="border-b border-border/50">
-                    <td className="py-2 px-3">Minimo</td>
+                    <td className="py-2 px-3">Mínimo</td>
                     <td className="text-center py-2 px-3 text-primary">{min(cacheResults)}ms</td>
                     <td className="text-center py-2 px-3">{min(sqlResults)}ms</td>
                   </tr>
                   <tr className="border-b border-border/50">
-                    <td className="py-2 px-3">Maximo</td>
+                    <td className="py-2 px-3">Máximo</td>
                     <td className="text-center py-2 px-3 text-primary">{max(cacheResults)}ms</td>
                     <td className="text-center py-2 px-3">{max(sqlResults)}ms</td>
                   </tr>
                   <tr className="border-b border-border/50">
-                    <td className="py-2 px-3">Media</td>
+                    <td className="py-2 px-3">Média</td>
                     <td className="text-center py-2 px-3 text-primary font-medium">{avgCache}ms</td>
                     <td className="text-center py-2 px-3 font-medium">{avgSql}ms</td>
                   </tr>
                   <tr>
-                    <td className="py-2 px-3">Ultimo source</td>
+                    <td className="py-2 px-3">Último source</td>
                     <td className="text-center py-2 px-3">
                       {cacheResults.at(-1) && (
                         <Badge variant="outline" className={sourceBadgeClass[cacheResults.at(-1)!.source]}>
@@ -141,7 +141,7 @@ export function MetricsPanel({ results }: MetricsPanelProps) {
           <div className="col-span-1 border-l border-border pl-6 space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium">
               <Users className="h-4 w-4 text-muted-foreground" />
-              <span>Ultimo retorno</span>
+              <span>Último retorno</span>
               {lastResult && (
                 <Badge variant="outline" className="ml-auto text-xs">{lastResult.count}</Badge>
               )}
