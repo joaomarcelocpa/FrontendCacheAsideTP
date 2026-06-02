@@ -26,3 +26,7 @@ async function getStudents<T>(path: string): Promise<T> {
 export async function listStudents(): Promise<StudentListResponse> {
   return getStudents<StudentListResponse>('/students');
 }
+
+export async function viewStudent(identifier: string): Promise<Student> {
+  return getStudents<Student>(`/students/${identifier}`);
+}

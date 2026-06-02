@@ -24,3 +24,7 @@ async function getStudents<T>(path: string): Promise<T> {
 export async function listStudentsCached(): Promise<StudentCacheResponse> {
   return getStudents<StudentCacheResponse>('/students/cached');
 }
+
+export async function viewStudentCached(identifier: string): Promise<Student> {
+  return getStudents<Student>(`/students/cached/${identifier}`);
+}

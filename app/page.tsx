@@ -57,7 +57,7 @@ export default function Home() {
 
         {/* Cadastro de Aluno */}
         <section className="space-y-4">
-          <h2 className="text-xl font-semibold">Alunos</h2>
+          <h2 className="text-xl font-semibold">Gestão dos Alunos</h2>
           <StudentForm onLog={addLog} />
         </section>
 
