@@ -3,82 +3,101 @@
 import { useState } from "react";
 import { Zap, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { listStudents } from "@/shared/students.read.service";
+import type { Student } from "@/shared/students.read.service";
+import { listStudentsCached } from "@/shared/students.cache.service";
+
+export interface TestResult {
+  type: "cache" | "sql";
+  source: "sql" | "cache_hit" | "cache_miss";
+  duration_ms: number;
+  count: number;
+  students: Student[];
+}
 
 interface PerformanceTestProps {
   onLog: (message: string, type: "info" | "success" | "error") => void;
-  onMetric: (type: "cache" | "sql", time: number) => void;
+  onResult: (result: TestResult) => void;
 }
 
-export function PerformanceTest({ onLog, onMetric }: PerformanceTestProps) {
+const sourceLabel: Record<TestResult["source"], string> = {
+  sql: "sql",
+  cache_hit: "cache hit",
+  cache_miss: "cache miss",
+};
+
+const sourceBadgeClass: Record<TestResult["source"], string> = {
+  sql: "",
+  cache_hit: "bg-green-500/20 text-green-600 border-green-500/30",
+  cache_miss: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
+};
+
+export function PerformanceTest({ onLog, onResult }: PerformanceTestProps) {
   const [isTestingCache, setIsTestingCache] = useState(false);
   const [isTestingSql, setIsTestingSql] = useState(false);
-  const [lastCacheTime, setLastCacheTime] = useState<number | null>(null);
-  const [lastSqlTime, setLastSqlTime] = useState<number | null>(null);
+  const [lastCache, setLastCache] = useState<TestResult | null>(null);
+  const [lastSql, setLastSql] = useState<TestResult | null>(null);
 
   const runCacheTest = async () => {
     setIsTestingCache(true);
     onLog("[CACHE ASIDE] Iniciando teste...", "info");
-    
-    // Simulacao - substitua pela chamada real ao backend
-    const startTime = performance.now();
-    await new Promise((resolve) => setTimeout(resolve, Math.random() * 50 + 10));
-    const endTime = performance.now();
-    const responseTime = Math.round(endTime - startTime);
-    
-    setLastCacheTime(responseTime);
-    onMetric("cache", responseTime);
-    onLog(`[CACHE ASIDE] Tempo de resposta: ${responseTime}ms`, "success");
-    setIsTestingCache(false);
+    try {
+      const { data, meta } = await listStudentsCached();
+      const result: TestResult = { type: "cache", source: meta.source, duration_ms: meta.duration_ms, count: meta.total, students: data };
+      setLastCache(result);
+      onResult(result);
+      onLog(`[CACHE ASIDE] ${meta.source} — ${meta.duration_ms}ms — ${data.length} alunos`, "success");
+    } catch (error) {
+      onLog(`[CACHE ASIDE] Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`, "error");
+    } finally {
+      setIsTestingCache(false);
+    }
   };
 
   const runSqlTest = async () => {
     setIsTestingSql(true);
     onLog("[SQL DIRETO] Iniciando teste...", "info");
-    
-    // Simulacao - substitua pela chamada real ao backend
-    const startTime = performance.now();
-    await new Promise((resolve) => setTimeout(resolve, Math.random() * 150 + 50));
-    const endTime = performance.now();
-    const responseTime = Math.round(endTime - startTime);
-    
-    setLastSqlTime(responseTime);
-    onMetric("sql", responseTime);
-    onLog(`[SQL DIRETO] Tempo de resposta: ${responseTime}ms`, "success");
-    setIsTestingSql(false);
+    try {
+      const { data, meta } = await listStudents();
+      const result: TestResult = { type: "sql", source: meta.source, duration_ms: meta.duration_ms, count: meta.total, students: data };
+      setLastSql(result);
+      onResult(result);
+      onLog(`[SQL DIRETO] ${meta.source} — ${meta.duration_ms}ms — ${data.length} alunos`, "success");
+    } catch (error) {
+      onLog(`[SQL DIRETO] Erro: ${error instanceof Error ? error.message : "Erro desconhecido"}`, "error");
+    } finally {
+      setIsTestingSql(false);
+    }
   };
 
   return (
     <div className="flex flex-col sm:flex-row gap-4">
-      <div className="flex-1 p-6 rounded-xl bg-primary/10 border-2 border-primary/30">
-        <Button 
-          className="w-full h-16 text-lg gap-3" 
-          onClick={runCacheTest} 
-          disabled={isTestingCache}
-        >
+      <div className="flex-1 p-6 rounded-xl">
+        <Button className="w-full h-16 text-lg gap-3" onClick={runCacheTest} disabled={isTestingCache}>
           <Zap className="h-5 w-5" />
           {isTestingCache ? "Testando..." : "Teste com Cache Aside"}
         </Button>
-        {lastCacheTime !== null && (
-          <p className="text-center mt-3 text-sm text-muted-foreground">
-            Ultimo tempo: <span className="font-bold text-primary">{lastCacheTime}ms</span>
-          </p>
+        {lastCache && (
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <Badge variant="outline" className={sourceBadgeClass[lastCache.source]}>
+              {sourceLabel[lastCache.source]}
+            </Badge>
+            <span className="text-sm text-muted-foreground">{lastCache.duration_ms}ms · {lastCache.count} alunos</span>
+          </div>
         )}
       </div>
 
-      <div className="flex-1 p-6 rounded-xl bg-secondary/20 border-2 border-secondary/50">
-        <Button 
-          variant="secondary"
-          className="w-full h-16 text-lg gap-3" 
-          onClick={runSqlTest} 
-          disabled={isTestingSql}
-        >
+      <div className="flex-1 p-6 rounded-xl">
+        <Button variant="secondary" className="w-full h-16 text-lg gap-3" onClick={runSqlTest} disabled={isTestingSql}>
           <Database className="h-5 w-5" />
           {isTestingSql ? "Testando..." : "Teste via SQL"}
         </Button>
-        {lastSqlTime !== null && (
-          <p className="text-center mt-3 text-sm text-muted-foreground">
-            Ultimo tempo: <span className="font-bold">{lastSqlTime}ms</span>
-          </p>
+        {lastSql && (
+          <div className="flex items-center justify-center gap-2 mt-3">
+            <Badge variant="secondary">{sourceLabel[lastSql.source]}</Badge>
+            <span className="text-sm text-muted-foreground">{lastSql.duration_ms}ms · {lastSql.count} alunos</span>
+          </div>
         )}
       </div>
     </div>

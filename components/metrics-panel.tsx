@@ -1,32 +1,40 @@
 "use client";
 
-import { Clock, TrendingUp } from "lucide-react";
+import { Clock, TrendingUp, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import type { TestResult } from "./performance-test";
 
 interface MetricsPanelProps {
-  cacheMetrics: number[];
-  sqlMetrics: number[];
+  results: TestResult[];
 }
 
-export function MetricsPanel({ cacheMetrics, sqlMetrics }: MetricsPanelProps) {
-  const avgCache = cacheMetrics.length > 0 
-    ? Math.round(cacheMetrics.reduce((a, b) => a + b, 0) / cacheMetrics.length) 
-    : 0;
-  const avgSql = sqlMetrics.length > 0 
-    ? Math.round(sqlMetrics.reduce((a, b) => a + b, 0) / sqlMetrics.length) 
-    : 0;
-  const minCache = cacheMetrics.length > 0 ? Math.min(...cacheMetrics) : 0;
-  const maxCache = cacheMetrics.length > 0 ? Math.max(...cacheMetrics) : 0;
-  const minSql = sqlMetrics.length > 0 ? Math.min(...sqlMetrics) : 0;
-  const maxSql = sqlMetrics.length > 0 ? Math.max(...sqlMetrics) : 0;
+const sourceBadgeClass: Record<TestResult["source"], string> = {
+  sql: "",
+  cache_hit: "bg-green-500/20 text-green-600 border-green-500/30",
+  cache_miss: "bg-yellow-500/20 text-yellow-600 border-yellow-500/30",
+};
 
-  const improvement = avgSql > 0 && avgCache > 0 
-    ? Math.round(((avgSql - avgCache) / avgSql) * 100) 
+export function MetricsPanel({ results }: MetricsPanelProps) {
+  const cacheResults = results.filter((r) => r.type === "cache");
+  const sqlResults = results.filter((r) => r.type === "sql");
+
+  const avg = (arr: TestResult[]) =>
+    arr.length > 0 ? Math.round(arr.reduce((a, b) => a + b.duration_ms, 0) / arr.length) : 0;
+  const min = (arr: TestResult[]) =>
+    arr.length > 0 ? Math.min(...arr.map((r) => r.duration_ms)) : 0;
+  const max = (arr: TestResult[]) =>
+    arr.length > 0 ? Math.max(...arr.map((r) => r.duration_ms)) : 0;
+
+  const avgCache = avg(cacheResults);
+  const avgSql = avg(sqlResults);
+  const improvement = avgSql > 0 && avgCache > 0
+    ? Math.round(((avgSql - avgCache) / avgSql) * 100)
     : 0;
 
-  const hasData = cacheMetrics.length > 0 || sqlMetrics.length > 0;
+  const lastResult = results.at(-1);
 
-  if (!hasData) {
+  if (results.length === 0) {
     return (
       <Card className="border border-border">
         <CardContent className="py-12 text-center text-muted-foreground">
@@ -45,74 +53,111 @@ export function MetricsPanel({ cacheMetrics, sqlMetrics }: MetricsPanelProps) {
           Metricas de Performance
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        {/* Cards de resumo */}
-        <div className="grid grid-cols-3 gap-4">
-          <div className="p-4 rounded-lg bg-primary/10 text-center">
-            <p className="text-2xl font-bold text-primary">{avgCache}ms</p>
-            <p className="text-xs text-muted-foreground">Media Cache</p>
-          </div>
-          <div className="p-4 rounded-lg bg-secondary/30 text-center">
-            <p className="text-2xl font-bold">{avgSql}ms</p>
-            <p className="text-xs text-muted-foreground">Media SQL</p>
-          </div>
-          <div className="p-4 rounded-lg bg-green-500/10 text-center">
-            <p className="text-2xl font-bold text-green-600">{improvement > 0 ? `${improvement}%` : "-"}</p>
-            <p className="text-xs text-muted-foreground">Melhoria</p>
-          </div>
-        </div>
-
-        {/* Tabela de detalhes */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 px-3 font-medium">Metrica</th>
-                <th className="text-center py-2 px-3 font-medium text-primary">Cache Aside</th>
-                <th className="text-center py-2 px-3 font-medium">SQL Direto</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr className="border-b border-border/50">
-                <td className="py-2 px-3">Minimo</td>
-                <td className="text-center py-2 px-3 text-primary">{minCache}ms</td>
-                <td className="text-center py-2 px-3">{minSql}ms</td>
-              </tr>
-              <tr className="border-b border-border/50">
-                <td className="py-2 px-3">Maximo</td>
-                <td className="text-center py-2 px-3 text-primary">{maxCache}ms</td>
-                <td className="text-center py-2 px-3">{maxSql}ms</td>
-              </tr>
-              <tr>
-                <td className="py-2 px-3">Media</td>
-                <td className="text-center py-2 px-3 text-primary font-medium">{avgCache}ms</td>
-                <td className="text-center py-2 px-3 font-medium">{avgSql}ms</td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-
-        {/* Barra visual */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-3">
-            <span className="text-xs w-16">Cache</span>
-            <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-primary rounded-full transition-all duration-500"
-                style={{ width: `${avgSql > 0 ? Math.min((avgCache / avgSql) * 100, 100) : 0}%` }}
-              />
+      <CardContent>
+        <div className="grid grid-cols-3 gap-6">
+          {/* Metricas */}
+          <div className="col-span-2 space-y-6">
+            <div className="grid grid-cols-3 gap-4">
+              <div className="p-4 rounded-lg bg-primary/10 text-center">
+                <p className="text-2xl font-bold text-primary">{cacheResults.at(-1)?.duration_ms ?? 0}ms</p>
+                <p className="text-xs text-muted-foreground">Ultimo Cache</p>
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/30 text-center">
+                <p className="text-2xl font-bold">{sqlResults.at(-1)?.duration_ms ?? 0}ms</p>
+                <p className="text-xs text-muted-foreground">Ultimo SQL</p>
+              </div>
+              <div className="p-4 rounded-lg bg-green-500/10 text-center">
+                <p className="text-2xl font-bold text-green-600">{improvement > 0 ? `${improvement}%` : "-"}</p>
+                <p className="text-xs text-muted-foreground">Melhoria</p>
+              </div>
             </div>
-            <span className="text-xs w-12 text-right">{avgCache}ms</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs w-16">SQL</span>
-            <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
-              <div 
-                className="h-full bg-secondary rounded-full"
-                style={{ width: "100%" }}
-              />
+
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2 px-3 font-medium">Metrica</th>
+                    <th className="text-center py-2 px-3 font-medium text-primary">Cache Aside</th>
+                    <th className="text-center py-2 px-3 font-medium">SQL Direto</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Minimo</td>
+                    <td className="text-center py-2 px-3 text-primary">{min(cacheResults)}ms</td>
+                    <td className="text-center py-2 px-3">{min(sqlResults)}ms</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Maximo</td>
+                    <td className="text-center py-2 px-3 text-primary">{max(cacheResults)}ms</td>
+                    <td className="text-center py-2 px-3">{max(sqlResults)}ms</td>
+                  </tr>
+                  <tr className="border-b border-border/50">
+                    <td className="py-2 px-3">Media</td>
+                    <td className="text-center py-2 px-3 text-primary font-medium">{avgCache}ms</td>
+                    <td className="text-center py-2 px-3 font-medium">{avgSql}ms</td>
+                  </tr>
+                  <tr>
+                    <td className="py-2 px-3">Ultimo source</td>
+                    <td className="text-center py-2 px-3">
+                      {cacheResults.at(-1) && (
+                        <Badge variant="outline" className={sourceBadgeClass[cacheResults.at(-1)!.source]}>
+                          {cacheResults.at(-1)!.source}
+                        </Badge>
+                      )}
+                    </td>
+                    <td className="text-center py-2 px-3">
+                      {sqlResults.at(-1) && (
+                        <Badge variant="secondary">{sqlResults.at(-1)!.source}</Badge>
+                      )}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
             </div>
-            <span className="text-xs w-12 text-right">{avgSql}ms</span>
+
+            <div className="space-y-2">
+              <div className="flex items-center gap-3">
+                <span className="text-xs w-16">Cache</span>
+                <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-primary rounded-full transition-all duration-500"
+                    style={{ width: `${avgSql > 0 ? Math.min((avgCache / avgSql) * 100, 100) : 0}%` }}
+                  />
+                </div>
+                <span className="text-xs w-12 text-right">{avgCache}ms</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className="text-xs w-16">SQL</span>
+                <div className="flex-1 h-4 bg-muted rounded-full overflow-hidden">
+                  <div className="h-full bg-secondary rounded-full" style={{ width: "100%" }} />
+                </div>
+                <span className="text-xs w-12 text-right">{avgSql}ms</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Lista discreta de alunos */}
+          <div className="col-span-1 border-l border-border pl-6 space-y-3">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Users className="h-4 w-4 text-muted-foreground" />
+              <span>Ultimo retorno</span>
+              {lastResult && (
+                <Badge variant="outline" className="ml-auto text-xs">{lastResult.count}</Badge>
+              )}
+            </div>
+            {lastResult && lastResult.students.length > 0 ? (
+              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
+                {lastResult.students.map((student, i) => (
+                  <div key={student.identifier ?? i} className="p-2 rounded-md bg-muted/40 text-xs">
+                    <p className="font-medium truncate">{student.name}</p>
+                    <p className="text-muted-foreground truncate">{student.course} · P{student.period}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-xs text-muted-foreground">Nenhum aluno retornado</p>
+            )}
           </div>
         </div>
       </CardContent>

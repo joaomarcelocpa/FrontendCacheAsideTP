@@ -4,13 +4,13 @@ import { useState, useCallback } from "react";
 import { Header } from "@/components/header";
 import { StudentForm } from "@/components/student-form";
 import { PerformanceTest } from "@/components/performance-test";
+import type { TestResult } from "@/components/performance-test";
 import { MetricsPanel } from "@/components/metrics-panel";
 import { LogsPanel, LogEntry } from "@/components/logs-panel";
 
 export default function Home() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
-  const [cacheMetrics, setCacheMetrics] = useState<number[]>([]);
-  const [sqlMetrics, setSqlMetrics] = useState<number[]>([]);
+  const [results, setResults] = useState<TestResult[]>([]);
 
   const addLog = useCallback((message: string, type: "info" | "success" | "error") => {
     const now = new Date();
@@ -31,12 +31,8 @@ export default function Home() {
     ]);
   }, []);
 
-  const addMetric = useCallback((type: "cache" | "sql", time: number) => {
-    if (type === "cache") {
-      setCacheMetrics((prev) => [...prev, time]);
-    } else {
-      setSqlMetrics((prev) => [...prev, time]);
-    }
+  const addResult = useCallback((result: TestResult) => {
+    setResults((prev) => [...prev, result]);
   }, []);
 
   const clearLogs = useCallback(() => {
@@ -51,12 +47,12 @@ export default function Home() {
         {/* Testes de Performance */}
         <section className="space-y-4">
           <h2 className="text-xl font-semibold">Testes de Performance</h2>
-          <PerformanceTest onLog={addLog} onMetric={addMetric} />
+          <PerformanceTest onLog={addLog} onResult={addResult} />
         </section>
 
         {/* Metricas */}
         <section>
-          <MetricsPanel cacheMetrics={cacheMetrics} sqlMetrics={sqlMetrics} />
+          <MetricsPanel results={results} />
         </section>
 
         {/* Cadastro de Aluno */}
