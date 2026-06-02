@@ -38,8 +38,7 @@ export function LogsPanel({ logs, onClear }: LogsPanelProps) {
   return (
     <Card className="border border-border">
       <CardHeader className="pb-4 flex flex-row items-center justify-between">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Terminal className="h-5 w-5 text-primary" />
+        <CardTitle className="text-xl flex items-center gap-2">
           Logs
         </CardTitle>
         <Button variant="ghost" size="sm" onClick={onClear}>
