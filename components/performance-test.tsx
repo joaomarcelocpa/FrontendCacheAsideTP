@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Zap, Database } from "lucide-react";
+import { Zap, Database, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { listStudents } from "@/shared/students.read.service";
-import { listStudentsCached } from "@/shared/students.cache.service";
+import { listStudentsCached, invalidateStudentsListCache } from "@/shared/students.cache.service";
 import {Student} from "@/shared/students.interface";
 
 export interface TestResult {
@@ -36,6 +36,7 @@ const sourceBadgeClass: Record<TestResult["source"], string> = {
 export function PerformanceTest({ onLog, onResult }: PerformanceTestProps) {
   const [isTestingCache, setIsTestingCache] = useState(false);
   const [isTestingSql, setIsTestingSql] = useState(false);
+  const [isInvalidating, setIsInvalidating] = useState(false);
   const [lastCache, setLastCache] = useState<TestResult | null>(null);
   const [lastSql, setLastSql] = useState<TestResult | null>(null);
 
@@ -71,6 +72,19 @@ export function PerformanceTest({ onLog, onResult }: PerformanceTestProps) {
     }
   };
 
+  const runInvalidateCache = async () => {
+    setIsInvalidating(true);
+    onLog("[CACHE] Invalidando cache da lista...", "info");
+    try {
+      await invalidateStudentsListCache();
+      onLog("[CACHE] Cache da lista invalidado com sucesso!", "success");
+    } catch (error) {
+      onLog(`[CACHE] Erro ao invalidar cache: ${error instanceof Error ? error.message : "Erro desconhecido"}`, "error");
+    } finally {
+      setIsInvalidating(false);
+    }
+  };
+
   return (
     <div className="flex flex-col sm:flex-row gap-4">
       <div className="flex-1 p-6 rounded-xl">
@@ -99,6 +113,13 @@ export function PerformanceTest({ onLog, onResult }: PerformanceTestProps) {
             <span className="text-sm text-muted-foreground">{lastSql.duration_ms}ms · {lastSql.count} alunos</span>
           </div>
         )}
+      </div>
+
+      <div className="flex-1 p-6 rounded-xl">
+        <Button variant="outline" className="w-full h-16 text-lg gap-3" onClick={runInvalidateCache} disabled={isInvalidating}>
+          <Trash2 className="h-5 w-5" />
+          {isInvalidating ? "Invalidando..." : "Invalidar Cache"}
+        </Button>
       </div>
     </div>
   );

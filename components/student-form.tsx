@@ -13,6 +13,7 @@ import {
   deleteStudent,
 } from "@/shared/students.write.service";
 import { listStudents } from "@/shared/students.read.service";
+import { invalidateStudentsListCache } from "@/shared/students.cache.service";
 import type { Student } from "@/shared/students.interface";
 
 type ActiveModal = null | "create" | "update" | "password" | "delete";
@@ -98,6 +99,15 @@ export function StudentForm({ onLog }: StudentFormProps) {
 
   // --- Handlers ---
 
+  const invalidateCache = async () => {
+    try {
+      await invalidateStudentsListCache();
+      onLog("[CACHE] Cache da lista de alunos invalidado", "info");
+    } catch (e) {
+      onLog(`[CACHE] Erro ao invalidar cache: ${e instanceof Error ? e.message : "Erro desconhecido"}`, "error");
+    }
+  };
+
   const handleCreate = async () => {
     const { name, age, address, course, period, email, password } = createData;
     if (!name || !age || !address || !course || !period || !email || !password) {
@@ -115,6 +125,7 @@ export function StudentForm({ onLog }: StudentFormProps) {
         email, password,
       });
       onLog(`[CADASTRO] Aluno "${name}" cadastrado com sucesso!`, "success");
+      await invalidateCache();
       handleClose();
     } catch (e) {
       onLog(`[CADASTRO] Erro: ${e instanceof Error ? e.message : "Erro desconhecido"}`, "error");
@@ -140,6 +151,7 @@ export function StudentForm({ onLog }: StudentFormProps) {
         email: updateData.email || undefined,
       });
       onLog(`[ATUALIZAR] Aluno "${selectedStudent.name}" atualizado com sucesso!`, "success");
+      await invalidateCache();
       handleClose();
     } catch (e) {
       onLog(`[ATUALIZAR] Erro: ${e instanceof Error ? e.message : "Erro desconhecido"}`, "error");
@@ -158,6 +170,7 @@ export function StudentForm({ onLog }: StudentFormProps) {
     try {
       await updateStudentPassword(selectedStudent.identifier, { password: newPassword });
       onLog(`[SENHA] Senha de "${selectedStudent.name}" alterada com sucesso!`, "success");
+      await invalidateCache();
       handleClose();
     } catch (e) {
       onLog(`[SENHA] Erro: ${e instanceof Error ? e.message : "Erro desconhecido"}`, "error");
@@ -173,6 +186,7 @@ export function StudentForm({ onLog }: StudentFormProps) {
     try {
       await deleteStudent(selectedStudent.identifier);
       onLog(`[DELETAR] Aluno "${selectedStudent.name}" deletado com sucesso!`, "success");
+      await invalidateCache();
       handleClose();
     } catch (e) {
       onLog(`[DELETAR] Erro: ${e instanceof Error ? e.message : "Erro desconhecido"}`, "error");

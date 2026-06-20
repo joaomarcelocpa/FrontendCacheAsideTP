@@ -28,3 +28,12 @@ export async function listStudentsCached(): Promise<StudentCacheResponse> {
 export async function viewStudentCached(identifier: string): Promise<Student> {
   return getStudents<Student>(`/students/cached/${identifier}`);
 }
+
+export async function invalidateStudentsListCache(): Promise<void> {
+  const response = await fetch(`${API_URL}/students/cached`, { method: 'DELETE' });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ message: 'Erro desconhecido' }));
+    throw new Error(error.message ?? `HTTP ${response.status}`);
+  }
+}

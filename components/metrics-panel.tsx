@@ -57,6 +57,17 @@ export function MetricsPanel({ results }: MetricsPanelProps) {
         <div className="grid grid-cols-3 gap-6">
           {/* Metricas */}
           <div className="col-span-2 space-y-6">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 rounded-lg bg-primary/10 text-center">
+                <p className="text-2xl font-bold text-primary">{cacheResults.length}</p>
+                <p className="text-xs text-muted-foreground">Requisições Cache Redis</p>
+              </div>
+              <div className="p-4 rounded-lg bg-secondary/30 text-center">
+                <p className="text-2xl font-bold">{sqlResults.length}</p>
+                <p className="text-xs text-muted-foreground">Requisições SQL</p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-3 gap-4">
               <div className="p-4 rounded-lg bg-primary/10 text-center">
                 <p className="text-2xl font-bold text-primary">{cacheResults.at(-1)?.duration_ms ?? 0}ms</p>
