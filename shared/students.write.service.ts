@@ -26,7 +26,8 @@ export interface StudentUpdateDto {
 }
 
 export interface StudentUpdatePasswordDto {
-  password: string;
+  currentPassword: string;
+  newPassword: string;
 }
 
 async function sendRequest(url: string, method: string, data?: unknown): Promise<void> {

@@ -49,6 +49,7 @@ export function StudentForm({ onLog }: StudentFormProps) {
   const [updateData, setUpdateData] = useState(emptyUpdate);
 
   // Password form
+  const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
   const needsPicker = activeModal === "update" || activeModal === "password" || activeModal === "delete";
@@ -88,6 +89,7 @@ export function StudentForm({ onLog }: StudentFormProps) {
     setStudents([]);
     setCreateData(emptyCreate);
     setUpdateData(emptyUpdate);
+    setCurrentPassword("");
     setNewPassword("");
   };
 
@@ -161,14 +163,14 @@ export function StudentForm({ onLog }: StudentFormProps) {
   };
 
   const handlePassword = async () => {
-    if (!selectedStudent || !newPassword) {
-      onLog("[SENHA] Informe a nova senha", "error");
+    if (!selectedStudent || !currentPassword || !newPassword) {
+      onLog("[SENHA] Informe a senha atual e a nova senha", "error");
       return;
     }
     setIsSubmitting(true);
     onLog(`[SENHA] Alterando senha de: ${selectedStudent.name}`, "info");
     try {
-      await updateStudentPassword(selectedStudent.identifier, { password: newPassword });
+      await updateStudentPassword(selectedStudent.identifier, { currentPassword, newPassword });
       onLog(`[SENHA] Senha de "${selectedStudent.name}" alterada com sucesso!`, "success");
       await invalidateCache();
       handleClose();
@@ -391,10 +393,19 @@ export function StudentForm({ onLog }: StudentFormProps) {
               {activeModal === "password" && showForm && (
                 <>
                   <div className="space-y-2">
+                    <Label>Senha Atual *</Label>
+                    <Input
+                      type="password"
+                      placeholder="Digite a senha atual"
+                      value={currentPassword}
+                      onChange={(e) => setCurrentPassword(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
                     <Label>Nova Senha *</Label>
                     <Input
                       type="password"
-                      placeholder="Digite a nova senha"
+                      placeholder="Digite a nova senha (mín. 6 caracteres)"
                       value={newPassword}
                       onChange={(e) => setNewPassword(e.target.value)}
                     />
